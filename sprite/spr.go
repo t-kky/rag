@@ -63,7 +63,7 @@ func (s *Sprite) IndexedBitmapFrame(frame int) *image.RGBA {
 	return img
 }
 
-func Read(reader io.Reader) Sprite {
+func ReadSpr(reader io.Reader) Sprite {
 	sprite := Sprite{}
 	endian := binary.LittleEndian
 
