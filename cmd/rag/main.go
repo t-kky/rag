@@ -7,15 +7,16 @@ import (
 	"image/png"
 	"os"
 
-	"github.com/t-kky/rag/sprite"
 	"github.com/t-kky/rag/grf"
+	"github.com/t-kky/rag/sprite"
 )
 
 var (
-	head      int
-	palette   int
-	direction int
-	grfPath   string
+	head       int
+	palette    int
+	direction  int
+	grfPath    string
+	outputPath string
 )
 
 func init() {
@@ -23,6 +24,7 @@ func init() {
 	flag.IntVar(&palette, "palette", 1, "pal id")
 	flag.IntVar(&direction, "direction", 0, "direction")
 	flag.StringVar(&grfPath, "grf", "", "path to grf")
+	flag.StringVar(&outputPath, "output", "output.png", "output path")
 	flag.Parse()
 }
 
@@ -30,16 +32,16 @@ func headSprite(headID int, paletteID int, direction int) *image.RGBA {
 	spritePath := fmt.Sprintf("data/sprite/인간족/머리통/남/%d_남.spr", headID)
 	palettePath := fmt.Sprintf("data/palette/머리/머리%d_남_%d.pal", headID, paletteID)
 
-	data := grf.Read(grfPath)
-	spriteReader := data.ReadFile(spritePath)
-	defer spriteReader.Close()
+	fs := grf.NewFS(grfPath)
+	spriteFile, _ := fs.Open(spritePath)
+	defer spriteFile.Close()
 
-	spr := sprite.ReadSpr(spriteReader)
+	spr := sprite.ReadSpr(spriteFile)
 	// fmt.Printf("%+v\n", spr.Version())
 
-	palReader := data.ReadFile(palettePath)
-	defer palReader.Close()
-	palette := sprite.LoadPal(palReader)
+	palFile, _ := fs.Open(palettePath)
+	defer palFile.Close()
+	palette := sprite.LoadPal(palFile)
 
 	spr.Palette = palette.Colors
 
@@ -53,7 +55,10 @@ func main() {
 	}
 
 	img := headSprite(head, palette, direction)
-	imgFile, _ := os.Create("output.png")
+	imgFile, err := os.Create(outputPath)
+	if err != nil {
+		panic("unable to open output")
+	}
 	defer imgFile.Close()
 	png.Encode(imgFile, img)
 }
